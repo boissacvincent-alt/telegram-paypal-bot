@@ -3,8 +3,8 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, ContextTypes
 
 # --- CONFIG ---
-TOKEN = "8404889629:AAGlmwkLYmCFqCjNr8_TUNHAskoU6kEys-A"
-WEBHOOK_URL = "https://telegram-paypal-bot-0sf9.onrender.com"
+TOKEN = "8404889629:AAGlmwkLYmCFqCjNr8_TUNHAskoU6kEys-A"  # Ton token ici
+WEBHOOK_URL = "https://bot-token-ytmt.onrender.com"       # Ton URL Render
 PAYPAL_LINK = "https://paypal.me/stellaengie"
 
 # --- COMMANDES ---
@@ -20,7 +20,7 @@ def main():
     app = Application.builder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
 
-    # Set webhook auprès de Telegram
+    # Set webhook
     app.bot.set_webhook(f"{WEBHOOK_URL}/webhook/{TOKEN}")
 
     # Run webhook
