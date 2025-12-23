@@ -1,14 +1,13 @@
 import os
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, ContextTypes
+import asyncio
 
-# Récupération des variables d'environnement
 TOKEN = os.environ.get("BOT_TOKEN")
 PAYPAL_LINK = "https://paypal.me/stellaengie"
-PORT = int(os.environ.get("PORT", 8443))          # Render fournit automatiquement le port
-WEBHOOK_URL = os.environ.get("WEBHOOK_URL")      # Ex: https://monbot.onrender.com
+PORT = int(os.environ.get("PORT", 8443))
+WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
 
-# Commande /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [[InlineKeyboardButton("💳 Payer 20€ via PayPal", url=PAYPAL_LINK)]]
     await update.message.reply_text(
@@ -16,17 +15,19 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
-def main():
-    # Création de l'application Telegram
+async def main():
     app = Application.builder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
 
-    # Configuration du webhook pour Render
-    app.run_webhook(
-        listen="0.0.0.0",                # Obligatoire pour que Render puisse accéder au port
+    # Enregistrement automatique du webhook
+    await app.bot.set_webhook(f"{WEBHOOK_URL}/webhook/{TOKEN}")
+
+    # Lancement du webhook
+    await app.run_webhook(
+        listen="0.0.0.0",
         port=PORT,
         webhook_url=f"{WEBHOOK_URL}/webhook/{TOKEN}"
     )
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
