@@ -1,41 +1,43 @@
 import os
-from flask import Flask, request, jsonify
-from threading import Thread
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+import asyncio
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, ContextTypes
 
-TOKEN = os.environ.get("BOT_TOKEN")
-PAYPAL_LINK = "https://paypal.me/stellaengie"
+# --- CONFIG ---
+TOKEN = os.environ.get("BOT_TOKEN")  # Ton token Telegram
+WEBHOOK_URL = os.environ.get("WEBHOOK_URL")  # URL de ton service Render
+PAYPAL_LINK = "https://paypal.me/stellaengie"  # Lien PayPal pour paiement
 
-# ---------- TELEGRAM ----------
+# --- COMMANDES ---
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    keyboard = [[
-        InlineKeyboardButton("💳 Payer 20€ via PayPal", url=PAYPAL_LINK)
-    ]]
+    """
+    Envoie le message de démarrage avec le bouton de paiement.
+    """
+    keyboard = [
+        [InlineKeyboardButton("💳 Payer 20€ via PayPal", url=PAYPAL_LINK)]
+    ]
     await update.message.reply_text(
         "🔒 Accès au canal privé\n\n💰 Prix : 20€ (paiement unique)",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
-def run_telegram():
+# --- MAIN ---
+async def main():
+    """
+    Crée l'application, configure le webhook et lance le bot.
+    """
     app = Application.builder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
-    app.run_polling()
 
-# ---------- PAYPAL WEBHOOK ----------
-flask_app = Flask(__name__)
+    # Enregistrement automatique du webhook
+    await app.bot.set_webhook(f"{WEBHOOK_URL}/webhook/{TOKEN}")
 
-@flask_app.route("/paypal-webhook", methods=["POST"])
-def paypal_webhook():
-    data = request.json
-    print("Webhook PayPal reçu :", data)
-    return jsonify({"status": "ok"})
+    # Lancement du webhook
+    await app.run_webhook(
+        listen="0.0.0.0",
+        port=int(os.environ.get("PORT", 10000)),  # Render détecte automatiquement le port
+        webhook_url=f"{WEBHOOK_URL}/webhook/{TOKEN}"
+    )
 
-def run_flask():
-    port = int(os.environ.get("PORT", 10000))
-    flask_app.run(host="0.0.0.0", port=port)
-
-# ---------- MAIN ----------
 if __name__ == "__main__":
-    Thread(target=run_flask).start()
-    run_telegram()
+    asyncio.run(main())
